@@ -1,5 +1,4 @@
-﻿using System;
-using Domain;
+﻿using Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace Persistence
@@ -11,9 +10,12 @@ namespace Persistence
 
         }
 
+        // tables in DB
         public DbSet<Value> Values { get; set; }
+        public DbSet<Activity> Activities { get; set; }
 
         // Seed data
+        // Dobar samo za jednostavne primere, bolje u klasi Seed
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<Value>()

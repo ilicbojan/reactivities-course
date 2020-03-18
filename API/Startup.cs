@@ -1,43 +1,51 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Application.Activities;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Persistence;
 
-namespace API {
-    public class Startup {
-        public Startup (IConfiguration configuration) {
+namespace API
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices (IServiceCollection services) {
-            services.AddDbContext<DataContext> (opt => {
-                opt.UseSqlite (Configuration.GetConnectionString ("DefaultConnection"));
+        public void ConfigureServices(IServiceCollection services)
+        {
+            // Dodavanje DbContext klase, baze podataka
+            services.AddDbContext<DataContext>(opt =>
+            {
+                opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
-            services.AddCors (opt => {
-                opt.AddPolicy ("CorsPolicy", policy => {
-                    policy.AllowAnyHeader ().AllowAnyMethod ().WithOrigins ("http://localhost:3000");
+            // Dodavanje CORS, cross origin, da client-app moze da komunicira sa API
+            services.AddCors(opt =>
+            {
+                opt.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
                 });
             });
-            services.AddControllers ();
+            // dovoljno da se kaze samo za jedan handler, AddMediatR trazi samo assembly
+            services.AddMediatR(typeof(List.Handler).Assembly);
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure (IApplicationBuilder app, IWebHostEnvironment env) {
-            if (env.IsDevelopment ()) {
-                app.UseDeveloperExceptionPage ();
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
             }
 
             // iskljuceno dok se radi u Development, da sajt ne bi pitao za sigurnost
@@ -45,12 +53,13 @@ namespace API {
             // OBAVEZNO VRATITI KAD JE PUBLISH
             // app.UseHttpsRedirection();
 
-            app.UseRouting ();
+            app.UseRouting();
 
-            app.UseAuthorization ();
-            app.UseCors ("CorsPolicy");
-            app.UseEndpoints (endpoints => {
-                endpoints.MapControllers ();
+            app.UseAuthorization();
+            app.UseCors("CorsPolicy");
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
             });
         }
     }
