@@ -7,6 +7,7 @@ namespace Persistence
 {
     public class Seed
     {
+        // bolje od obicnog Seed, poziva se u DataContext
         public static void SeedData(DataContext context)
         {
             if (!context.Activities.Any())
