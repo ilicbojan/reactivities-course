@@ -1,6 +1,8 @@
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Application.Errors;
 using MediatR;
 using Persistence;
 
@@ -14,30 +16,29 @@ namespace Application.Activities
         }
 
         public class Handler : IRequestHandler<Command>
-        {
-            private readonly DataContext _context;
-            public Handler(DataContext context)
             {
-                _context = context;
-            }
-
-            public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
-            {
-                var activity = await _context.Activities.FindAsync(request.Id);
-
-                if (activity == null)
+                private readonly DataContext _context;
+                public Handler(DataContext context)
                 {
-                    throw new Exception("Could not find acitivity");
+                    _context = context;
                 }
 
-                _context.Remove(activity);
+                public async Task<Unit> Handle(Command request,
+                    CancellationToken cancellationToken)
+                {
+                    var activity = await _context.Activities.FindAsync(request.Id);
 
-                var success = await _context.SaveChangesAsync() > 0;
+                    if (activity == null)
+                        throw new RestException(HttpStatusCode.NotFound, new { activity = "Not found" });
 
-                if (success) return Unit.Value;
+                    _context.Remove(activity);
 
-                throw new Exception("Problem saving changes");
+                    var success = await _context.SaveChangesAsync() > 0;
+
+                    if (success) return Unit.Value;
+
+                    throw new Exception("Problem saving changes");
+                }
             }
-        }
     }
 }

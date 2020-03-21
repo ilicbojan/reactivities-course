@@ -1,4 +1,6 @@
 using Application.Activities;
+using API.Middleware;
+using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -37,15 +39,18 @@ namespace API
             });
             // dovoljno da se kaze samo za jedan handler, AddMediatR trazi samo assembly
             services.AddMediatR(typeof(List.Handler).Assembly);
-            services.AddControllers();
+            // AddFluentValidation za validaciju propertija
+            services.AddControllers()
+                .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseMiddleware<ErrorHandlingMiddleware>();
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
             }
 
             // iskljuceno dok se radi u Development, da sajt ne bi pitao za sigurnost
