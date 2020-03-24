@@ -1,23 +1,23 @@
+using System.Text;
 using Application.Activities;
+using Application.Interfaces;
 using API.Middleware;
+using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
+using Infrastructure.Security;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Persistence;
-using Infrastructure.Security;
-using Application.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
+using Persistence;
 
 namespace API
 {
@@ -36,27 +36,32 @@ namespace API
       // Dodavanje DbContext klase, baze podataka
       services.AddDbContext<DataContext>(opt =>
       {
+        opt.UseLazyLoadingProxies();
         opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
       });
       // Dodavanje CORS, cross origin, da client-app moze da komunicira sa API
       services.AddCors(opt =>
       {
         opt.AddPolicy("CorsPolicy", policy =>
-              {
-                policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
-              });
+        {
+          policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+        });
       });
       // dovoljno da se kaze samo za jedan handler, AddMediatR trazi samo assembly
       services.AddMediatR(typeof(List.Handler).Assembly);
+      services.AddAutoMapper(typeof(List.Handler));
       // AddFluentValidation za validaciju propertija
       services.AddControllers(opt =>
-      {
-        // dodavanje autorizacije za svaki controller
-        var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-        opt.Filters.Add(new AuthorizeFilter(policy));
-      })
-          .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>());
-
+        {
+          // dodavanje autorizacije za svaki controller
+          var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+          opt.Filters.Add(new AuthorizeFilter(policy));
+        })
+        .AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<Create>())
+        // Microsoft.AspNetCore.Mvc.NewtonsoftJson u Application project - zbog greske: A possible object cycle was detected which is not supported. This can either be due to a cycle or if the object depth is larger than the maximum allowed depth of 32
+        .AddNewtonsoftJson(options =>
+          options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+        );
 
       // PROBLEM SA OVIM KODOM, dodavanje identity
       // var builder = services.AddIdentityCore<AppUser>();
@@ -67,6 +72,15 @@ namespace API
       // zamena za prosli kod, dodavanje Identity 
       services.AddDefaultIdentity<AppUser>().AddEntityFrameworkStores<DataContext>();
 
+      services.AddAuthorization(opt =>
+      {
+        opt.AddPolicy("IsActivityHost", policy =>
+        {
+          policy.Requirements.Add(new IsHostRequirement());
+        });
+      });
+      services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
+
       // dodavanje autentifikacije
       var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
       services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -74,10 +88,10 @@ namespace API
         {
           opt.TokenValidationParameters = new TokenValidationParameters
           {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = key,
-            ValidateAudience = false,
-            ValidateIssuer = false
+          ValidateIssuerSigningKey = true,
+          IssuerSigningKey = key,
+          ValidateAudience = false,
+          ValidateIssuer = false
           };
         });
 

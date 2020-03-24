@@ -30,7 +30,6 @@ namespace Application.User
 
     public class Handler : IRequestHandler<Query, User>
     {
-      private readonly DataContext _context;
       private readonly UserManager<AppUser> _userManager;
       private readonly SignInManager<AppUser> _signInManager;
       private readonly IJwtGenerator _jwtGenerator;
