@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
+using Application.Profiles;
 
 namespace API
 {
@@ -92,10 +93,10 @@ namespace API
         {
           opt.TokenValidationParameters = new TokenValidationParameters
           {
-          ValidateIssuerSigningKey = true,
-          IssuerSigningKey = key,
-          ValidateAudience = false,
-          ValidateIssuer = false
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key,
+            ValidateAudience = false,
+            ValidateIssuer = false
           };
           // za SignalR
           opt.Events = new JwtBearerEvents
@@ -117,6 +118,7 @@ namespace API
       services.AddScoped<IJwtGenerator, JwtGenerator>();
       services.AddScoped<IUserAccessor, UserAccessor>();
       services.AddScoped<IPhotoAccessor, PhotoAccessor>();
+      services.AddScoped<IProfileReader, ProfileReader>();
       services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
     }
 
