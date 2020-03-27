@@ -16,6 +16,7 @@ namespace Persistence
             public DbSet<Activity> Activities { get; set; }
             public DbSet<UserActivity> UserActivities { get; set; }
             public DbSet<Photo> Photos { get; set; }
+            public DbSet<Comment> Comments { get; set; }
 
             // Seed data
             // Dobar samo za jednostavne primere, bolje u klasi Seed

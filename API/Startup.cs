@@ -1,7 +1,9 @@
 using System.Text;
+using System.Threading.Tasks;
 using Application.Activities;
 using Application.Interfaces;
 using API.Middleware;
+using API.SignalR;
 using AutoMapper;
 using Domain;
 using FluentValidation.AspNetCore;
@@ -45,12 +47,13 @@ namespace API
       {
         opt.AddPolicy("CorsPolicy", policy =>
         {
-          policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
+          policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000").AllowCredentials();
         });
       });
       // dovoljno da se kaze samo za jedan handler, AddMediatR trazi samo assembly
       services.AddMediatR(typeof(List.Handler).Assembly);
       services.AddAutoMapper(typeof(List.Handler));
+      services.AddSignalR();
       // AddFluentValidation za validaciju propertija
       services.AddControllers(opt =>
         {
@@ -94,6 +97,20 @@ namespace API
           ValidateAudience = false,
           ValidateIssuer = false
           };
+          // za SignalR
+          opt.Events = new JwtBearerEvents
+          {
+            OnMessageReceived = context =>
+            {
+              var accessToken = context.Request.Query["access_token"];
+              var path = context.HttpContext.Request.Path;
+              if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chat")))
+              {
+                context.Token = accessToken;
+              }
+              return Task.CompletedTask;
+            }
+          };
         });
 
       // dodato za validaciju tokenom
@@ -123,9 +140,12 @@ namespace API
       app.UseAuthorization();
 
       app.UseCors("CorsPolicy");
+      // Vise se ne koristi za 3.1
+      // app.UseSignalR(routes => { routes.MapHub<ChatHub>("/chat"); });
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllers();
+        endpoints.MapHub<ChatHub>("/chat");
       });
     }
   }
