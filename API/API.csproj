@@ -7,9 +7,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.2"/>
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.1.2"/>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.2"/>
+    <PackageReference Include="NWebsec.AspNetCore.Middleware" Version="3.0.0"/>
   </ItemGroup>
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UserSecretsId>e9960b45-d7ec-4f83-a99b-b73830f488d5</UserSecretsId>
   </PropertyGroup>
 </Project>

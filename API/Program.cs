@@ -33,15 +33,16 @@ namespace API
           var logger = services.GetRequiredService<ILogger<Program>>();
           logger.LogError(ex, "An error occured during migration");
         }
+        host.Run();
       }
-
-      host.Run();
     }
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
         .ConfigureWebHostDefaults(webBuilder =>
         {
+          // security header
+          webBuilder.UseKestrel(x => x.AddServerHeader = false);
           webBuilder.UseStartup<Startup>();
         });
   }
